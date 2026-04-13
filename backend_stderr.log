@@ -1,0 +1,4 @@
+D:\ML_project\Code_bug_fix\venv\Lib\site-packages\pydantic\_internal\_fields.py:132: UserWarning: Field "model_version" in MetricsResponse has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
