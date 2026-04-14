@@ -6,6 +6,7 @@ import json
 import os
 import re
 from pathlib import Path
+import functools
 
 from dotenv import load_dotenv
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
@@ -14,14 +15,17 @@ load_dotenv(Path(__file__).resolve().with_name(".env"))
 
 try:
     import google.generativeai as genai
+    from google.api_core.exceptions import ResourceExhausted, ServiceUnavailable, InternalServerError
 
     GEMINI_OK = True
+    RETRYABLE_EXCEPTIONS = (ValueError, ResourceExhausted, ServiceUnavailable, InternalServerError)
 except ImportError:
     GEMINI_OK = False
+    RETRYABLE_EXCEPTIONS = (ValueError,)
 
 API_ENV_VAR = "GEMINI_API_KEY"
 USE_GEMINI_ENV_VAR = "USE_GEMINI"
-MODEL_NAME = "gemini-2.0-flash"
+MODEL_NAME = "gemini-flash-latest"
 _model = None
 
 LANGUAGE_ALIASES = {
@@ -54,7 +58,11 @@ def _is_c_like(language: str) -> bool:
 
 
 def _should_use_gemini() -> bool:
-    value = os.getenv(USE_GEMINI_ENV_VAR, "false").strip().lower()
+    value = os.getenv(USE_GEMINI_ENV_VAR)
+    if value is None:
+        return bool(_get_api_key())
+
+    value = value.strip().lower()
     return value in {"1", "true", "yes", "on"}
 
 
@@ -387,10 +395,11 @@ def build_basic_response(code: str, syntax_err: str = "", language: str = "pytho
     }
 
 
+@functools.lru_cache(maxsize=128)
 @retry(
     stop=stop_after_attempt(3),
     wait=wait_exponential(multiplier=1, min=2, max=8),
-    retry=retry_if_exception_type(ValueError),
+    retry=retry_if_exception_type(RETRYABLE_EXCEPTIONS),
     reraise=True,
 )
 def _call_gemini(prompt: str) -> dict:

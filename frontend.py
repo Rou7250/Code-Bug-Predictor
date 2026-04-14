@@ -4,7 +4,8 @@ frontend.py - Professional Streamlit UI for the bug predictor.
 import requests
 import streamlit as st
 
-API = "http://localhost:8000"
+import os
+API = os.getenv("API_URL", "http://127.0.0.1:8000")
 LANGUAGE_OPTIONS = ["Python", "Java", "C", "C++", "JavaScript"]
 EDITOR_LANGUAGE_MAP = {
     "Python": "python",
@@ -49,287 +50,280 @@ def inject_styles():
     st.markdown(
         """
         <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500;700&display=swap');
+
         :root {
-            --ink: #F4F7FB;
-            --muted: #9FB0C3;
-            --paper: #050608;
-            --card: rgba(10, 14, 18, 0.92);
-            --line: rgba(140, 167, 196, 0.16);
-            --accent: #22C38E;
-            --accent-dark: #178A64;
-            --alert: #FF6B57;
-            --warm: #FFB34D;
+            --ink: #FFFFFF;
+            --muted: #A0AAB5;
+            --bg-base: #0B0E14;
+            --glass-bg: rgba(20, 25, 35, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --accent-1: #00F0FF;
+            --accent-2: #7000FF;
+            --accent-3: #FF0055;
+            --warm: #FF9900;
+        }
+
+        /* Full page background animation */
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
         [data-testid="stAppViewContainer"] {
-            background:
-                radial-gradient(circle at top left, rgba(255, 179, 77, 0.10), transparent 24%),
-                radial-gradient(circle at top right, rgba(34, 195, 142, 0.12), transparent 20%),
-                linear-gradient(180deg, #040507 0%, #090C10 42%, #050608 100%);
+            background: linear-gradient(-45deg, #05070a, #0d131f, #050b14, #12091c);
+            background-size: 400% 400%;
+            animation: gradientShift 20s ease infinite;
             color: var(--ink);
+            font-family: 'Inter', sans-serif;
         }
 
         [data-testid="stSidebar"] {
-            background: linear-gradient(180deg, #06080B 0%, #0B1117 100%);
-            border-right: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(10, 12, 16, 0.6) !important;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-right: 1px solid var(--glass-border) !important;
         }
 
         [data-testid="stSidebar"] * {
-            color: #F7F3EB;
+            font-family: 'Inter', sans-serif;
         }
 
         .block-container {
-            padding-top: 2.2rem;
-            padding-bottom: 2rem;
-            max-width: 1320px;
+             padding-top: 2rem;
+             max-width: 1400px;
+        }
+
+        /* Glassmorphism Cards */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 240, 255, 0.15);
+            border-color: rgba(0, 240, 255, 0.3);
         }
 
         .hero {
-            background: linear-gradient(135deg, rgba(6, 9, 13, 0.98), rgba(12, 19, 28, 0.98));
-            color: #F4F7FB;
-            border: 1px solid rgba(255, 255, 255, 0.07);
-            border-radius: 28px;
-            padding: 2rem 2.2rem;
-            box-shadow: 0 24px 52px rgba(0, 0, 0, 0.38);
-            margin-bottom: 1.4rem;
+            background: linear-gradient(135deg, rgba(20, 25, 35, 0.5) 0%, rgba(10, 15, 25, 0.8) 100%);
+            border: 1px solid var(--glass-border);
+            border-radius: 32px;
+            padding: 3rem;
+            margin-bottom: 2rem;
             overflow: hidden;
             position: relative;
+            backdrop-filter: blur(20px);
         }
 
-        .hero::after {
+        .hero::before {
             content: "";
             position: absolute;
-            width: 240px;
-            height: 240px;
-            right: -60px;
-            top: -80px;
-            background: radial-gradient(circle, rgba(34, 195, 142, 0.22), transparent 70%);
+            top: -50%; left: -50%; right: -50%; bottom: -50%;
+            background: conic-gradient(from 180deg at 50% 50%, var(--accent-1) 0deg, var(--accent-2) 180deg, var(--accent-3) 360deg);
+            filter: blur(120px);
+            opacity: 0.15;
+            z-index: 0;
+            animation: spin 15s linear infinite;
         }
 
-        .hero-kicker {
-            text-transform: uppercase;
-            letter-spacing: 0.18rem;
-            font-size: 0.76rem;
-            color: rgba(244, 247, 251, 0.62);
-            margin-bottom: 0.5rem;
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
         }
 
         .hero-title {
-            font-family: Georgia, "Palatino Linotype", serif;
-            font-size: 2.5rem;
-            line-height: 1.05;
-            margin: 0 0 0.7rem 0;
+            font-family: 'Outfit', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: linear-gradient(to right, #ffffff, #a0aab5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+            line-height: 1.1;
+            letter-spacing: -1px;
         }
 
         .hero-subtitle {
-            max-width: 48rem;
-            color: rgba(244, 247, 251, 0.78);
-            font-size: 1.02rem;
-            line-height: 1.65;
-            margin: 0;
+            font-size: 1.2rem;
+            color: var(--muted);
+            max-width: 600px;
+            line-height: 1.6;
         }
-
-        .summary-grid {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 0.9rem;
-            margin: 1.2rem 0 1rem 0;
-        }
-
-        .summary-card, .panel-card, .history-card, .feature-card {
-            background: var(--card);
-            border: 1px solid var(--line);
-            border-radius: 24px;
-            box-shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
-        }
-
-        .summary-card {
-            padding: 1rem 1.1rem;
-        }
-
-        .summary-label, .panel-label, .mini-label {
-            font-size: 0.75rem;
-            letter-spacing: 0.08rem;
+        
+        .hero-kicker {
+            color: var(--accent-1);
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            letter-spacing: 2px;
             text-transform: uppercase;
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+        }
+
+        .summary-grid, .metric-band {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .summary-card, .panel-card, .history-card, .feature-card, .risk-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .summary-card { padding: 1.5rem; display: flex; flex-direction: column; align-items: flex-start; }
+        .summary-card:hover { transform: translateY(-4px); border-color: var(--accent-2); background: rgba(30, 35, 50, 0.6); box-shadow: 0 10px 30px rgba(112, 0, 255, 0.2); }
+
+        .summary-label, .mini-label, .panel-label {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
             color: var(--muted);
         }
 
         .summary-value {
-            margin-top: 0.35rem;
-            color: var(--ink);
-            font-size: 1.35rem;
+            font-family: 'Outfit', sans-serif;
+            font-size: 2rem;
             font-weight: 700;
+            margin-top: 0.5rem;
+            background: linear-gradient(to right, #00F0FF, #7000FF);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        .panel-card {
-            padding: 1.15rem 1.2rem;
-            margin-bottom: 1rem;
-        }
-
+        .panel-card { padding: 2rem; margin-bottom: 1.5rem; }
+        
         .section-title {
-            color: var(--ink);
-            font-family: Georgia, "Palatino Linotype", serif;
-            font-size: 1.35rem;
-            margin-bottom: 0.35rem;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
-        .section-copy {
-            color: var(--muted);
-            font-size: 0.95rem;
-            line-height: 1.6;
-            margin-bottom: 0.9rem;
-        }
-
-        .risk-card {
-            border-radius: 24px;
-            padding: 1.25rem 1.2rem;
-            border: 1px solid rgba(255, 255, 255, 0.07);
-            background: linear-gradient(180deg, rgba(13, 18, 24, 0.94), rgba(8, 12, 16, 0.94));
-            margin-bottom: 1rem;
-        }
-
-        .risk-score {
-            font-size: 2.85rem;
-            font-weight: 800;
-            line-height: 1;
-            margin: 0.35rem 0 0.2rem 0;
-        }
-
-        .risk-track {
-            width: 100%;
-            height: 10px;
-            border-radius: 999px;
-            background: rgba(255, 255, 255, 0.10);
-            overflow: hidden;
-            margin-top: 0.85rem;
-        }
-
-        .risk-fill {
-            height: 100%;
-            border-radius: 999px;
-        }
-
-        .issue-card {
-            border-left: 4px solid var(--warm);
-            background: rgba(24, 19, 12, 0.92);
-            padding: 0.85rem 0.95rem;
-            border-radius: 16px;
-            color: var(--ink);
-            margin-bottom: 0.65rem;
-        }
-
-        .bug-line-card {
-            background: rgba(13, 18, 24, 0.92);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 16px;
-            padding: 0.9rem;
-            margin-bottom: 0.65rem;
-        }
-
-        .status-pill {
+        .section-title::before {
+            content: '';
             display: inline-block;
-            padding: 0.32rem 0.7rem;
-            border-radius: 999px;
-            font-size: 0.78rem;
-            font-weight: 700;
-            letter-spacing: 0.04rem;
-            text-transform: uppercase;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--accent-1);
+            box-shadow: 0 0 10px var(--accent-1);
         }
 
-        .history-card {
-            padding: 1rem 1.1rem;
-            margin-bottom: 0.85rem;
-        }
-
-        .metric-band {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 0.85rem;
-        }
-
-        .feature-card {
-            padding: 0.85rem 0.95rem;
-            margin-bottom: 0.75rem;
-        }
-
-        .feature-value {
-            font-size: 1.28rem;
-            font-weight: 700;
-            color: var(--ink);
-            margin-top: 0.25rem;
-        }
-
-        div[data-baseweb="select"] > div,
-        div[data-baseweb="input"] > div,
-        .stTextArea textarea {
-            background: rgba(9, 12, 16, 0.96);
-            border-radius: 18px;
-            border: 1px solid rgba(255, 255, 255, 0.10);
-            color: #F4F7FB;
-        }
-
-        .stTextArea textarea {
-            font-family: Consolas, "Courier New", monospace;
-            font-size: 0.95rem;
-            background: #0A0D12 !important;
-            color: #F4F7FB !important;
-            caret-color: #22C38E;
-        }
-
-        label, .stMarkdown, p, span, div {
-            color: inherit;
-        }
-
-        .stTextArea textarea::placeholder,
-        input::placeholder {
-            color: #7E90A3;
-        }
-
-        [data-testid="stCodeBlock"] {
-            background: #070A0E !important;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 18px;
-        }
+        .section-copy { color: var(--muted); margin-bottom: 1.5rem; line-height: 1.6; }
 
         .stButton > button, .stFormSubmitButton > button {
-            border-radius: 999px;
-            border: none;
-            background: linear-gradient(135deg, #22C38E, #178A64);
-            color: #F7FBFD;
-            font-weight: 700;
-            min-height: 3rem;
-            box-shadow: 0 12px 28px rgba(34, 195, 142, 0.22);
+            background: linear-gradient(90deg, #00F0FF 0%, #7000FF 100%) !important;
+            color: white !important;
+            border: none !important;
+            border-radius: 12px !important;
+            font-family: 'Outfit', sans-serif !important;
+            font-weight: 600 !important;
+            font-size: 1.1rem !important;
+            padding: 0.8rem 2rem !important;
+            transition: all 0.3s ease !important;
+            box-shadow: 0 4px 15px rgba(112, 0, 255, 0.3) !important;
+            text-transform: uppercase !important;
+            letter-spacing: 1px !important;
         }
+
+        .stButton > button:hover, .stFormSubmitButton > button:hover {
+            transform: scale(1.02) translateY(-2px) !important;
+            box-shadow: 0 8px 25px rgba(0, 240, 255, 0.5) !important;
+            background: linear-gradient(90deg, #00F0FF -20%, #7000FF 80%) !important;
+        }
+
+        .stTextArea textarea, div[data-baseweb="select"] > div {
+            background: rgba(0,0,0,0.4) !important;
+            border: 1px solid var(--glass-border) !important;
+            color: #FFFFFF !important;
+            border-radius: 12px !important;
+            font-family: 'Inter', monospace !important;
+            transition: border-color 0.3s;
+        }
+        
+        div[data-baseweb="select"] * {
+            color: #FFFFFF !important;
+        }
+        
+        .stTextArea textarea:focus, div[data-baseweb="select"] > div:focus-within {
+            border-color: var(--accent-1) !important;
+            box-shadow: 0 0 0 1px var(--accent-1) !important;
+        }
+
+        .risk-card { padding: 2.5rem; position: relative; overflow: hidden; }
+        .risk-score { font-family: 'Outfit', sans-serif; font-size: 4rem; font-weight: 800; line-height: 1; margin: 1rem 0;}
+        .risk-track { height: 12px; background: rgba(255,255,255,0.05); border-radius: 20px; overflow: hidden; margin-top: 1.5rem; }
+        .risk-fill { height: 100%; border-radius: 20px; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
+        
+        .issue-card, .bug-line-card {
+            background: rgba(255, 153, 0, 0.05);
+            border-left: 4px solid var(--warm);
+            padding: 1rem 1.2rem;
+            border-radius: 0 12px 12px 0;
+            margin-bottom: 0.8rem;
+            transition: transform 0.2s;
+        }
+        .issue-card:hover { transform: translateX(5px); background: rgba(255, 153, 0, 0.1); border-left-color: var(--accent-1); }
+        
+        .bug-line-card { border-left-color: var(--accent-3); background: rgba(255, 0, 85, 0.05); }
+        .bug-line-card:hover { transform: translateX(5px); background: rgba(255, 0, 85, 0.1); border-left-color: var(--accent-2);}
+        
+        .feature-card { padding: 1.5rem; text-align: center; }
+        .feature-value { font-family: 'Outfit', sans-serif; font-size: 2rem; font-weight: 700; background: linear-gradient(to right, #fff, #ccc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .history-card { padding: 1.5rem; cursor: pointer; }
+        .history-card:hover { border-color: var(--accent-1); transform: translateX(5px) translateY(-2px); box-shadow: 0 10px 20px rgba(0, 240, 255, 0.1); }
+        .status-pill { border-radius: 20px; padding: 0.4rem 0.8rem; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 0.85rem; }
 
         .stTabs [data-baseweb="tab-list"] {
-            gap: 0.6rem;
-            background: transparent;
-            margin-bottom: 1rem;
+            gap: 1rem; background: transparent; padding-bottom: 0.5rem; margin-bottom: 1.5rem;
         }
-
         .stTabs [data-baseweb="tab"] {
-            border-radius: 999px;
-            background: rgba(11, 15, 20, 0.84);
-            border: 1px solid rgba(255, 255, 255, 0.07);
-            padding: 0.75rem 1rem;
-            color: var(--ink);
-            font-weight: 700;
+            border-radius: 12px; background: rgba(255,255,255,0.03); color: var(--muted);
+            padding: 0.8rem 1.5rem; font-family: 'Outfit', sans-serif; font-weight: 600;
+            border: 1px solid transparent; transition: all 0.3s;
         }
-
         .stTabs [aria-selected="true"] {
-            background: #0F1D2A !important;
-            color: #F4F7FB !important;
-            border-color: rgba(34, 195, 142, 0.35) !important;
+            background: var(--glass-bg) !important;
+            color: #fff !important;
+            border: 1px solid var(--accent-1) !important;
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.2) !important;
         }
-
-        @media (max-width: 900px) {
-            .summary-grid, .metric-band {
-                grid-template-columns: 1fr;
-            }
-
-            .hero-title {
-                font-size: 2rem;
-            }
+        .stTabs [data-baseweb="tab"]:hover { background: rgba(255,255,255,0.08); color: #fff; }
+        
+        /* Loading overlay */
+        .stSpinner > div > div { border-top-color: var(--accent-1) !important; }
+        
+        /* Typography overrides for default text */
+        p, div, span, label { color: inherit; }
+        
+        [data-testid="stCodeBlock"] {
+            background: #000000 !important;
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
         }
         </style>
         """,
@@ -341,12 +335,13 @@ def render_hero():
     st.markdown(
         """
         <div class="hero">
-            <div class="hero-kicker">Engineering Review Workspace</div>
-            <div class="hero-title">Code Bug Predictor + Fix Generator</div>
-            <p class="hero-subtitle">
-                Review code across Python, Java, C, C++, and JavaScript with a cleaner analysis workspace.
-                The interface stays focused on fast triage, readable fixes, and practical engineering signals.
-            </p>
+            <div class="hero-content">
+                <div class="hero-kicker">✦ Next-Gen Workspace</div>
+                <div class="hero-title">Code Bug Predictor</div>
+                <p class="hero-subtitle">
+                    AI-driven analysis for detecting bugs, risks, and security flaws across multiple languages.
+                </p>
+            </div>
         </div>
         """,
         unsafe_allow_html=True,

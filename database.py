@@ -3,7 +3,9 @@ from sqlalchemy.orm import DeclarativeBase, sessionmaker
 from datetime import datetime, timezone
 import json
 
-DB_URL = "sqlite:///./bug_predictor.db"
+import os
+db_path = os.getenv("DB_PATH", "./bug_predictor.db")
+DB_URL = f"sqlite:///{db_path}"
 engine = create_engine(DB_URL, connect_args={"check_same_thread": False})
 Session = sessionmaker(bind=engine)
 

@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: code-bug-predictor
+    env: python
+    region: ohio
+    branch: main
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "bash start.sh"
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false # Set in the Render Dashboard securely
+      - key: USE_GEMINI
+        value: "true"
+      - key: DB_PATH
+        value: "/data/bug_predictor.db"
+    disk:
+      name: sqlite-data
+      mountPath: /data
+      sizeGB: 1 
