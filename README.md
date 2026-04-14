@@ -1,5 +1,7 @@
 # 🐛 Code Bug Predictor v2 — Production
 
+🚀 **Live Demo:** [https://code-bug-predictor.onrender.com](https://code-bug-predictor.onrender.com)
+
 ## Architecture
 
 ```
