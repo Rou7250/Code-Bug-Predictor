@@ -1,4 +1,4 @@
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, ConfigDict
 
 SUPPORTED_LANGUAGES = {
     "python",
@@ -58,6 +58,7 @@ class HistoryItem(BaseModel):
 
 
 class MetricsResponse(BaseModel):
+    model_config = ConfigDict(protected_namespaces=())
     trained: bool = False
     accuracy: float
     f1: float
