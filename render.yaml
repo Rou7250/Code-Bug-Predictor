@@ -13,4 +13,6 @@ services:
       - key: USE_GEMINI
         value: "true"
       - key: DB_PATH
-        value: "./bug_predictor.db" 
+        value: "./bug_predictor.db"
+      - key: API_URL
+        value: "http://127.0.0.1:8000"
